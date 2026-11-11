@@ -1,117 +1,120 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>Make Icons</title></head>
-<body>
-<canvas id="c192" width="192" height="192" style="margin:8px"></canvas>
-<canvas id="c512" width="512" height="512" style="margin:8px"></canvas>
-<br>
-<button onclick="download('c192','icon-192.png')">Download icon-192.png</button>
-<button onclick="download('c512','icon-512.png')">Download icon-512.png</button>
-
+<body style="background:#111;display:flex;gap:16px;padding:20px;align-items:flex-start">
+<div>
+  <canvas id="c192" width="192" height="192"></canvas><br>
+  <button onclick="dl('c192','icon-192.png')" style="margin-top:8px">Download 192</button>
+</div>
+<div>
+  <canvas id="c512" width="512" height="512"></canvas><br>
+  <button onclick="dl('c512','icon-512.png')" style="margin-top:8px">Download 512</button>
+</div>
 <script>
-function drawIcon(canvas) {
-  const size = canvas.width;
+function draw(canvas) {
+  const S = canvas.width;
   const ctx = canvas.getContext('2d');
-  const r = size * 0.14;
 
-  // Background
-  const bg = ctx.createLinearGradient(0, 0, size, size);
-  bg.addColorStop(0, '#0d1117');
-  bg.addColorStop(1, '#1a1a2e');
+  // Background — deep navy gradient
+  const bg = ctx.createRadialGradient(S*.5,S*.4,0, S*.5,S*.5,S*.72);
+  bg.addColorStop(0,'#1a2240');
+  bg.addColorStop(1,'#0a0d1a');
   ctx.fillStyle = bg;
-  roundRect(ctx, 0, 0, size, size, r);
-  ctx.fill();
+  roundRect(ctx,0,0,S,S,S*.13); ctx.fill();
 
-  // Flag stripe — Norwegian flag simplified as accent
-  const cx = size / 2;
-  const cy = size / 2;
-  const bookSize = size * 0.52;
+  const cx=S/2, cy=S/2;
 
-  // Book shape
-  ctx.save();
-  ctx.translate(cx, cy);
+  // ── Norwegian flag (bold, centered-top) ──
+  const fw=S*.46, fh=S*.32, fx=cx-fw/2, fy=S*.1;
+  // Red field
+  ctx.fillStyle='#EF2B2D';
+  ctx.beginPath(); roundRect(ctx,fx,fy,fw,fh,S*.025); ctx.fill();
+  // White cross
+  const cw=fw*.18, ch=fh*.22;
+  ctx.fillStyle='#fff';
+  ctx.fillRect(fx, fy+fh/2-ch/2, fw, ch);         // horizontal
+  ctx.fillRect(fx+fw*.32, fy, cw, fh);             // vertical
+  // Blue cross (thinner, inside white)
+  const bw=fw*.10, bh=fh*.12;
+  ctx.fillStyle='#002868';
+  ctx.fillRect(fx, fy+fh/2-bh/2, fw, bh);
+  ctx.fillRect(fx+fw*.36, fy, bw, fh);
 
-  // Book shadow
-  ctx.shadowColor = 'rgba(79,142,247,0.4)';
-  ctx.shadowBlur = size * 0.08;
+  // ── Open book ──
+  const bx=cx, by=S*.64;
+  const bw2=S*.48, bh2=S*.28;
+
+  // Shadow
+  ctx.shadowColor='rgba(79,142,247,.35)';
+  ctx.shadowBlur=S*.06;
 
   // Left page
-  ctx.fillStyle = '#2a3a5c';
-  roundRect(ctx, -bookSize/2, -bookSize*0.44, bookSize*0.46, bookSize*0.88, size*0.025);
-  ctx.fill();
+  ctx.fillStyle='#1e2d50';
+  ctx.beginPath();
+  ctx.moveTo(bx,by-bh2/2);
+  ctx.quadraticCurveTo(bx-bw2*.5,by-bh2*.6, bx-bw2*.5,by);
+  ctx.quadraticCurveTo(bx-bw2*.5,by+bh2*.6, bx,by+bh2/2);
+  ctx.closePath(); ctx.fill();
 
   // Right page
-  ctx.fillStyle = '#1e2d4a';
-  roundRect(ctx, bookSize*0.04, -bookSize*0.44, bookSize*0.46, bookSize*0.88, size*0.025);
-  ctx.fill();
+  ctx.fillStyle='#162440';
+  ctx.beginPath();
+  ctx.moveTo(bx,by-bh2/2);
+  ctx.quadraticCurveTo(bx+bw2*.5,by-bh2*.6, bx+bw2*.5,by);
+  ctx.quadraticCurveTo(bx+bw2*.5,by+bh2*.6, bx,by+bh2/2);
+  ctx.closePath(); ctx.fill();
 
-  // Spine
-  ctx.fillStyle = '#4f8ef7';
-  roundRect(ctx, -bookSize*0.04, -bookSize*0.46, bookSize*0.08, bookSize*0.92, size*0.015);
-  ctx.fill();
-  ctx.shadowBlur = 0;
+  ctx.shadowBlur=0;
+
+  // Spine line
+  ctx.strokeStyle='#4f8ef7'; ctx.lineWidth=S*.012;
+  ctx.beginPath(); ctx.moveTo(bx,by-bh2/2); ctx.lineTo(bx,by+bh2/2); ctx.stroke();
 
   // Text lines on left page
-  const lineColor = 'rgba(79,142,247,0.5)';
-  const lx = -bookSize*0.42;
-  const lineW = bookSize*0.36;
-  const lineH = size * 0.016;
-  const lineGap = size * 0.065;
-  [-1.5, -0.5, 0.5, 1.5, 2.5].forEach(i => {
-    ctx.fillStyle = i === -1.5 ? 'rgba(79,142,247,0.8)' : lineColor;
-    const w = i === -1.5 ? lineW * 0.7 : (i === 2.5 ? lineW * 0.5 : lineW);
-    roundRect(ctx, lx, i * lineGap - lineH/2, w, lineH, lineH/2);
-    ctx.fill();
+  const lc='rgba(79,142,247,.5)', lh=S*.013, lg=S*.038;
+  [-2,-1,0,1,2].forEach(i=>{
+    const lw2 = i===2?bw2*.22:i===-2?bw2*.3:bw2*.35;
+    ctx.fillStyle=i===-2?'rgba(79,142,247,.85)':lc;
+    roundRect(ctx,bx-bw2*.44,by+i*lg-lh/2,lw2,lh,lh/2); ctx.fill();
   });
-
   // Text lines on right page
-  const rx = bookSize*0.1;
-  [-1.5, -0.5, 0.5, 1.5, 2.5].forEach(i => {
-    ctx.fillStyle = lineColor;
-    const w = i === 2.5 ? lineW * 0.4 : (i === 0.5 ? lineW * 0.8 : lineW);
-    roundRect(ctx, rx, i * lineGap - lineH/2, w, lineH, lineH/2);
-    ctx.fill();
+  [-2,-1,0,1,2].forEach(i=>{
+    const lw2 = i===2?bw2*.18:i===0?bw2*.28:bw2*.33;
+    ctx.fillStyle=lc;
+    roundRect(ctx,bx+bw2*.08,by+i*lg-lh/2,lw2,lh,lh/2); ctx.fill();
   });
 
-  // Norwegian flag mini
-  const fs = size * 0.14;
-  const fx = bookSize*0.26;
-  const fy = -bookSize*0.36;
-  ctx.fillStyle = '#EF2B2D';
-  ctx.fillRect(fx - fs/2, fy - fs/2, fs, fs);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(fx - fs/2, fy - fs*0.12, fs, fs*0.24);
-  ctx.fillRect(fx - fs*0.12, fy - fs/2, fs*0.24, fs);
-  ctx.fillStyle = '#002868';
-  ctx.fillRect(fx - fs/2, fy - fs*0.08, fs, fs*0.16);
-  ctx.fillRect(fx - fs*0.08, fy - fs/2, fs*0.16, fs);
-
-  ctx.restore();
+  // Glow dot at spine-top
+  const grd=ctx.createRadialGradient(bx,by-bh2/2,0,bx,by-bh2/2,S*.04);
+  grd.addColorStop(0,'rgba(79,142,247,.8)');
+  grd.addColorStop(1,'rgba(79,142,247,0)');
+  ctx.fillStyle=grd;
+  ctx.beginPath(); ctx.arc(bx,by-bh2/2,S*.04,0,Math.PI*2); ctx.fill();
 }
 
-function roundRect(ctx, x, y, w, h, r) {
+function roundRect(ctx,x,y,w,h,r){
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
   ctx.closePath();
 }
 
-function download(id, filename) {
-  const a = document.createElement('a');
-  a.download = filename;
-  a.href = document.getElementById(id).toDataURL('image/png');
+function dl(id,name){
+  const a=document.createElement('a');
+  a.download=name;
+  a.href=document.getElementById(id).toDataURL('image/png');
   a.click();
 }
 
-drawIcon(document.getElementById('c192'));
-drawIcon(document.getElementById('c512'));
+draw(document.getElementById('c192'));
+draw(document.getElementById('c512'));
 </script>
 </body>
 </html>
