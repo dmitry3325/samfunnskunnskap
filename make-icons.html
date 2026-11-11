@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Make Icons</title></head>
+<body>
+<canvas id="c192" width="192" height="192" style="margin:8px"></canvas>
+<canvas id="c512" width="512" height="512" style="margin:8px"></canvas>
+<br>
+<button onclick="download('c192','icon-192.png')">Download icon-192.png</button>
+<button onclick="download('c512','icon-512.png')">Download icon-512.png</button>
+
+<script>
+function drawIcon(canvas) {
+  const size = canvas.width;
+  const ctx = canvas.getContext('2d');
+  const r = size * 0.14;
+
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, size, size);
+  bg.addColorStop(0, '#0d1117');
+  bg.addColorStop(1, '#1a1a2e');
+  ctx.fillStyle = bg;
+  roundRect(ctx, 0, 0, size, size, r);
+  ctx.fill();
+
+  // Flag stripe — Norwegian flag simplified as accent
+  const cx = size / 2;
+  const cy = size / 2;
+  const bookSize = size * 0.52;
+
+  // Book shape
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Book shadow
+  ctx.shadowColor = 'rgba(79,142,247,0.4)';
+  ctx.shadowBlur = size * 0.08;
+
+  // Left page
+  ctx.fillStyle = '#2a3a5c';
+  roundRect(ctx, -bookSize/2, -bookSize*0.44, bookSize*0.46, bookSize*0.88, size*0.025);
+  ctx.fill();
+
+  // Right page
+  ctx.fillStyle = '#1e2d4a';
+  roundRect(ctx, bookSize*0.04, -bookSize*0.44, bookSize*0.46, bookSize*0.88, size*0.025);
+  ctx.fill();
+
+  // Spine
+  ctx.fillStyle = '#4f8ef7';
+  roundRect(ctx, -bookSize*0.04, -bookSize*0.46, bookSize*0.08, bookSize*0.92, size*0.015);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Text lines on left page
+  const lineColor = 'rgba(79,142,247,0.5)';
+  const lx = -bookSize*0.42;
+  const lineW = bookSize*0.36;
+  const lineH = size * 0.016;
+  const lineGap = size * 0.065;
+  [-1.5, -0.5, 0.5, 1.5, 2.5].forEach(i => {
+    ctx.fillStyle = i === -1.5 ? 'rgba(79,142,247,0.8)' : lineColor;
+    const w = i === -1.5 ? lineW * 0.7 : (i === 2.5 ? lineW * 0.5 : lineW);
+    roundRect(ctx, lx, i * lineGap - lineH/2, w, lineH, lineH/2);
+    ctx.fill();
+  });
+
+  // Text lines on right page
+  const rx = bookSize*0.1;
+  [-1.5, -0.5, 0.5, 1.5, 2.5].forEach(i => {
+    ctx.fillStyle = lineColor;
+    const w = i === 2.5 ? lineW * 0.4 : (i === 0.5 ? lineW * 0.8 : lineW);
+    roundRect(ctx, rx, i * lineGap - lineH/2, w, lineH, lineH/2);
+    ctx.fill();
+  });
+
+  // Norwegian flag mini
+  const fs = size * 0.14;
+  const fx = bookSize*0.26;
+  const fy = -bookSize*0.36;
+  ctx.fillStyle = '#EF2B2D';
+  ctx.fillRect(fx - fs/2, fy - fs/2, fs, fs);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(fx - fs/2, fy - fs*0.12, fs, fs*0.24);
+  ctx.fillRect(fx - fs*0.12, fy - fs/2, fs*0.24, fs);
+  ctx.fillStyle = '#002868';
+  ctx.fillRect(fx - fs/2, fy - fs*0.08, fs, fs*0.16);
+  ctx.fillRect(fx - fs*0.08, fy - fs/2, fs*0.16, fs);
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function download(id, filename) {
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = document.getElementById(id).toDataURL('image/png');
+  a.click();
+}
+
+drawIcon(document.getElementById('c192'));
+drawIcon(document.getElementById('c512'));
+</script>
+</body>
+</html>

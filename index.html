@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Norsk" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="manifest" href="app.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-512.png" />
+  <title>Samfunnskunnskap</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c28;
+      --border: #2a2a3a;
+      --accent: #4f8ef7;
+      --accent2: #7c5cbf;
+      --text: #e8e8f0;
+      --text2: #8888aa;
+      --text3: #555570;
+      --success: #34c759;
+      --warning: #ff9f0a;
+      --radius: 14px;
+    }
+
+    * {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .btn-menu {
+      width: 36px; height: 36px;
+      border: none; background: none;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .btn-menu:active { background: var(--surface2); }
+
+    .topbar-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-speak-all {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-speak-all:active { background: var(--border); }
+    .btn-speak-all.speaking { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Layout ── */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+      overflow: hidden;
+    }
+
+    @media (max-width: 700px) {
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        width: 85vw;
+        max-width: 320px;
+        height: 100dvh;
+        z-index: 200;
+        transform: translateX(-100%);
+        border-right: none;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 199;
+      }
+      .overlay.show { display: block; }
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-sub {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .nav-chapter {
+      padding: 10px 16px 4px;
+    }
+
+    .chapter-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: none;
+      background: none;
+      color: var(--text);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .chapter-btn:hover { background: var(--surface2); }
+    .chapter-btn .ch-icon {
+      font-size: 18px;
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .chapter-btn .ch-num {
+      font-size: 10px;
+      color: var(--text3);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .chapter-btn .ch-arr {
+      margin-left: auto;
+      color: var(--text3);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+    .chapter-btn.expanded .ch-arr { transform: rotate(90deg); }
+
+    .chapter-sections {
+      display: none;
+      padding: 2px 0 6px 50px;
+    }
+    .chapter-sections.show { display: block; }
+
+    .section-btn {
+      width: 100%;
+      padding: 7px 10px;
+      border: none;
+      background: none;
+      color: var(--text2);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 13px;
+      transition: all 0.15s;
+      line-height: 1.3;
+    }
+    .section-btn:hover { background: var(--surface2); color: var(--text); }
+    .section-btn.active {
+      background: rgba(79,142,247,0.15);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px;
+      padding-bottom: max(100px, calc(env(safe-area-inset-bottom) + 100px));
+    }
+
+    .content-area h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .content-area .section-meta {
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .content-area .section-meta .meta-tag {
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      color: var(--text2);
+    }
+
+    .text-block {
+      margin-bottom: 20px;
+    }
+
+    .text-block h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 10px;
+      margin-top: 24px;
+    }
+
+    .text-block p {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .text-block ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .text-block li {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    /* clickable words */
+    .w {
+      cursor: pointer;
+      border-radius: 3px;
+      padding: 0 1px;
+      transition: background 0.15s, color 0.15s;
+      display: inline;
+    }
+    .w:hover { background: rgba(79,142,247,0.2); color: var(--accent); }
+    .w.selected { background: rgba(79,142,247,0.3); color: var(--accent); }
+
+    /* clickable sentences */
+    .s {
+      cursor: pointer;
+    }
+    .s:hover .w { background: rgba(124,92,191,0.15); }
+    .s.selected .w { background: rgba(124,92,191,0.25); color: #c8b4ff; }
+
+    /* ── Translation popup ── */
+    .popup {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom) + 80px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      width: calc(100% - 32px);
+      max-width: 500px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      z-index: 300;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      transition: opacity 0.2s, transform 0.2s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .popup.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: all;
+    }
+
+    .popup-original {
+      font-size: 15px;
+      color: var(--text2);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .popup-original-text {
+      flex: 1;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .btn-speak-popup {
+      width: 32px; height: 32px;
+      border: none;
+      background: var(--surface);
+      color: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .btn-speak-popup:active { background: var(--border); }
+    .btn-speak-popup.speaking {
+      background: rgba(79,142,247,0.2);
+      animation: pulse-btn 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-btn {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(79,142,247,0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(79,142,247,0); }
+    }
+
+    .popup-translation {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .popup-loading {
+      font-size: 14px;
+      color: var(--text3);
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 24px; height: 24px;
+      border: none;
+      background: var(--border);
+      color: var(--text2);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .popup-type {
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    /* ── Hint bar ── */
+    .hint-bar {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom) + 16px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .hint {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    /* ── Welcome screen ── */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+      text-align: center;
+      padding: 32px;
+      color: var(--text2);
+    }
+
+    .welcome-icon { font-size: 56px; }
+    .welcome h2 { font-size: 20px; font-weight: 700; color: var(--text); }
+    .welcome p { font-size: 14px; line-height: 1.6; max-width: 300px; }
+
+    /* ── Progress dots ── */
+    .progress-bar {
+      height: 2px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.3s ease;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- Overlay for mobile sidebar -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <button class="btn-menu" id="btnMenu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <div class="topbar-title" id="topbarTitle">Samfunnskunnskap</div>
+  <button class="btn-speak-all" id="btnSpeakAll">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+    </svg>
+    Читать всё
+  </button>
+</div>
+
+<!-- Progress bar -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="app-body">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">🇳🇴 Samfunnskunnskap</div>
+      <div class="sidebar-sub">Нажми слово → перевод<br>Долгий тап → перевод предложения</div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="content-area" id="contentArea">
+      <div class="welcome">
+        <div class="welcome-icon">📖</div>
+        <h2>Добро пожаловать</h2>
+        <p>Выбери тему в меню слева, чтобы начать читать. Нажми на слово для перевода, долго удерживай — для перевода предложения.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Translation popup -->
+<div class="popup" id="popup">
+  <div class="popup-type" id="popupType">слово</div>
+  <div class="popup-original">
+    <div class="popup-original-text" id="popupOriginal"></div>
+    <button class="btn-speak-popup" id="btnSpeakPopup">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
+    </button>
+  </div>
+  <div class="popup-translation" id="popupTranslation">
+    <span class="popup-loading">Переводим...</span>
+  </div>
+  <button class="popup-close" id="popupClose">✕</button>
+</div>
+
+<!-- Hint bar -->
+<div class="hint-bar">
+  <div class="hint">👆 слово → перевод</div>
+  <div class="hint">✋ удержи → предложение</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ДАННЫЕ — все темы программы Samfunnskunnskap 2021
+// ═══════════════════════════════════════════════════════
+const CHAPTERS = [
+  {
+    id: 'demokrati',
+    title: 'Demokrati og medborgerskap',
+    titleRu: 'Демократия и гражданство',
+    icon: '🏛️',
+    sections: [
+      {
+        id: 'demokrati-1',
+        title: 'Hva er demokrati?',
+        content: `
+          <h1>Hva er demokrati?</h1>
+          <div class="section-meta"><span class="meta-tag">Demokrati</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>Norge er et demokrati. Det betyr at folket bestemmer hvem som skal styre landet. Dette gjøres gjennom valg. Hvert fjerde år er det stortingsvalg i Norge.</p>
+
+            <h2>Folkestyre</h2>
+            <p>Demokrati betyr folkestyre. Alle voksne borgere har rett til å stemme ved valg. I Norge har du stemmerett fra du er 18 år.</p>
+
+            <p>Demokratiet bygger på noen viktige prinsipper. Alle mennesker er like mye verdt. Alle har de samme rettighetene. Mindretallet skal respekteres selv om flertallet bestemmer.</p>
+
+            <h2>Menneskerettigheter</h2>
+            <p>Menneskerettighetene er grunnleggende rettigheter som alle mennesker har. De gjelder uansett kjønn, alder, religion eller opprinnelse. FN vedtok Verdenserklæringen om menneskerettigheter i 1948.</p>
+
+            <p>Norge har forpliktet seg til å respektere og sikre menneskerettighetene. Disse rettighetene er også nedfelt i den norske Grunnloven.</p>
+
+            <h2>Ytringsfrihet</h2>
+            <p>Ytringsfrihet er retten til å si og skrive det du mener. Dette er en av de viktigste rettighetene i et demokrati. Ytringsfriheten er ikke absolutt. Du kan ikke true andre eller spre løgner om dem.</p>
+          </div>
+        `
+      },
+      {
+        id: 'demokrati-2',
+        title: 'Stortinget og regjering',
+        content: `
+          <h1>Stortinget og regjeringen</h1>
+          <div class="section-meta"><span class="meta-tag">Demokrati</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>Stortinget er Norges nasjonalforsamling. Det består av 169 representanter som velges av folket hvert fjerde år. Stortinget lager lovene og bestemmer over statsbudsjettet.</p>
+
+            <h2>Regjeringen</h2>
+            <p>Regjeringen styrer landet til daglig. Statsministeren er regjeringens leder. Regjeringen må ha støtte fra et flertall på Stortinget for å sitte ved makten.</p>
+
+            <p>Norge har et konstitusjonelt monarki. Kongen er statsoverhode, men har i praksis mest en seremoniell rolle. Den politiske makten ligger hos Stortinget og regjeringen.</p>
+
+            <h2>Kommuner og fylker</h2>
+            <p>Norge er delt inn i kommuner og fylker. Kommunene har ansvar for barnehager, skoler, eldreomsorg og mange andre lokale tjenester. Hvert fjerde år er det også kommunevalg.</p>
+
+            <p>Det er over 350 kommuner i Norge. Oslo er landets hovedstad og den største kommunen. Kommunestyret er kommunens øverste organ, og kommunestyremedlemmene velges ved valg.</p>
+          </div>
+        `
+      },
+      {
+        id: 'demokrati-3',
+        title: 'Rettigheter og plikter',
+        content: `
+          <h1>Rettigheter og plikter</h1>
+          <div class="section-meta"><span class="meta-tag">Demokrati</span><span class="meta-tag">Kapittel 3</span></div>
+
+          <div class="text-block">
+            <p>Som innbygger i Norge har du både rettigheter og plikter. Rettighetene beskytter deg, og pliktene sikrer at samfunnet fungerer for alle.</p>
+
+            <h2>Rettigheter</h2>
+            <p>Du har rett til å ytre deg fritt, til å praktisere din religion, og til å bli behandlet likt som alle andre. Du har rett til helsehjelp og til å sende barna dine på skole.</p>
+
+            <p>Dersom du er norsk statsborger, har du stemmerett. Stemmeretten er en av de viktigste rettighetene i et demokrati.</p>
+
+            <h2>Plikter</h2>
+            <p>Du har plikt til å følge norske lover. Du har plikt til å betale skatt. Skattene finansierer de offentlige tjenestene som alle bruker, som skoler, sykehus og veier.</p>
+
+            <p>Foreldre har plikt til å sende barna sine på skole. Barn har skoleplikt fra de er seks år gamle til de er 16 år.</p>
+
+            <h2>Likestilling</h2>
+            <p>Likestilling betyr at kvinner og menn har de samme rettighetene og mulighetene. Norge er et land med høy grad av likestilling. Kvinner og menn deltar i arbeidslivet i omtrent like stor grad.</p>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    id: 'historie',
+    title: 'Norsk historie',
+    titleRu: 'История Норвегии',
+    icon: '📜',
+    sections: [
+      {
+        id: 'historie-1',
+        title: 'Norge gjennom historien',
+        content: `
+          <h1>Norge gjennom historien</h1>
+          <div class="section-meta"><span class="meta-tag">Historie</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>Norge har en lang og rik historie. Landet ble befolket etter siste istid, for ca. 10 000 år siden. Vikingene er kanskje det folk er mest kjent for fra norsk middelalder.</p>
+
+            <h2>Vikingtiden</h2>
+            <p>Vikingtiden varte fra ca. 800 til 1050 e.Kr. Vikingene var sjøfarere, handelsmenn og krigere. De seilte til mange land i Europa, og nådde også Amerika lenge før Columbus.</p>
+
+            <p>Harald Hårfagre samlet Norge til ett rike på slutten av 800-tallet. Han regnes som Norges første konge.</p>
+
+            <h2>Union med Danmark og Sverige</h2>
+            <p>På 1300-tallet ble Norge en del av Kalmarunionen med Danmark og Sverige. Norge var i union med Danmark fra 1380 til 1814. I denne perioden var København den viktigste byen, og dansk var skriftspråket.</p>
+
+            <h2>Grunnloven av 1814</h2>
+            <p>Den 17. mai 1814 fikk Norge sin grunnlov på Eidsvoll. Grunnloven er Norges viktigste lov og grunnlag for demokratiet. Den 17. mai feires hvert år som Norges nasjonaldag.</p>
+
+            <p>Etter 1814 gikk Norge inn i en ny union, denne gangen med Sverige. Unionen med Sverige varte til 1905, da Norge ble et selvstendig land.</p>
+          </div>
+        `
+      },
+      {
+        id: 'historie-2',
+        title: 'Andre verdenskrig i Norge',
+        content: `
+          <h1>Andre verdenskrig i Norge</h1>
+          <div class="section-meta"><span class="meta-tag">Historie</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>Den 9. april 1940 ble Norge okkupert av Nazi-Tyskland. Okkupasjonen varte til den 8. mai 1945. Dette er en av de mørkeste periodene i norsk historie.</p>
+
+            <h2>Okkupasjonen</h2>
+            <p>Under okkupasjonen måtte nordmenn leve under tyske regler. Kongen og regjeringen flyktet til London og ledet motstandskampen derfra. Mange nordmenn deltok i motstandsbevegelsen inne i landet.</p>
+
+            <p>Jødene i Norge ble forfulgt og deportert. Ca. 773 norske jøder ble drept i konsentrasjonsleire under krigen. Dette er en mørk del av norsk historie som det er viktig å huske.</p>
+
+            <h2>Frigjøringen</h2>
+            <p>Den 8. mai 1945 kapitulerte Tyskland, og Norge ble frigjort. Kongen og regjeringen kom tilbake til Norge. Den 8. mai feires som frigjøringsdag i Norge.</p>
+
+            <h2>Etterkrigstiden</h2>
+            <p>Etter krigen bygde Norge seg opp igjen raskt. Velferdsstaten ble bygd ut med gode helsetjenester, trygdeordninger og skole for alle. Oljefunnet på Ekofisk i 1969 ga Norge store inntekter og bidro til velstandsøkningen.</p>
+          </div>
+        `
+      },
+      {
+        id: 'historie-3',
+        title: 'Innvandring til Norge',
+        content: `
+          <h1>Innvandring til Norge</h1>
+          <div class="section-meta"><span class="meta-tag">Historie</span><span class="meta-tag">Kapittel 3</span></div>
+
+          <div class="text-block">
+            <p>Innvandring til Norge har en lang historie. I dag bor det mennesker fra over 200 land i Norge. Innvandrere og etterkommere av innvandrere utgjør om lag 18 prosent av Norges befolkning.</p>
+
+            <h2>Arbeidsinnvandring</h2>
+            <p>På 1960- og 70-tallet kom mange arbeidsinnvandrere fra Pakistan, Tyrkia og Marokko. De kom for å jobbe i norsk industri. I 2004, da Polen ble med i EU, kom mange polakker til Norge for å jobbe.</p>
+
+            <h2>Flyktninger og asylsøkere</h2>
+            <p>Mange innvandrere har kommet til Norge som flyktninger. De har flyktet fra krig, forfølgelse eller naturkatastrofer. Norge har tatt imot flyktninger fra mange land, blant annet Vietnam, Somalia og Syria.</p>
+
+            <h2>Integrering</h2>
+            <p>Integrering handler om at innvandrere deltar i det norske samfunnet på lik linje med andre. Å lære norsk er viktig for å delta i arbeidslivet og samfunnet. Introduksjonsprogrammet hjelper nye innvandrere å lære norsk og å komme i arbeid.</p>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    id: 'geografi',
+    title: 'Geografi og miljø',
+    titleRu: 'География и природа',
+    icon: '🏔️',
+    sections: [
+      {
+        id: 'geografi-1',
+        title: 'Norges geografi',
+        content: `
+          <h1>Norges geografi</h1>
+          <div class="section-meta"><span class="meta-tag">Geografi</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>Norge ligger i Nord-Europa og er en del av Skandinavia. Landet grenser til Sverige i øst, Finland i nordøst og Russland i nordøst. I vest og nord vender landet mot havet.</p>
+
+            <h2>Natur og landskap</h2>
+            <p>Norge er kjent for sin dramatiske natur. Fjordene er lange, smale havbuktninger som skjærer seg inn i landet. De er dannet av breer under istiden. Sognefjorden er den lengste fjorden i verden.</p>
+
+            <p>Fjellene dekker store deler av landet. Hardangervidda er Europas største høyfjellsplatå. Om vinteren er det mye snø i fjellet, og mange nordmenn liker å gå på ski.</p>
+
+            <h2>Klima</h2>
+            <p>Klimaet i Norge varierer mye. På Vestlandet er det mildt og mye nedbør. I innlandet er det kaldere vintere. Nord for Polarsirkelen er det midnattssol om sommeren og mørketid om vinteren.</p>
+
+            <h2>Befolkning</h2>
+            <p>Norge har omtrent 5,5 millioner innbyggere. Oslo er den største byen med over 700 000 innbyggere. Bergen, Trondheim og Stavanger er andre store byer. Store deler av landet er tynt befolket.</p>
+          </div>
+        `
+      },
+      {
+        id: 'geografi-2',
+        title: 'Miljø og bærekraft',
+        content: `
+          <h1>Miljø og bærekraft</h1>
+          <div class="section-meta"><span class="meta-tag">Geografi</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>Miljøvern er viktig i Norge. Nordmenn er opptatt av å ta vare på naturen. Norge har forpliktet seg til å kutte utslippene av klimagasser.</p>
+
+            <h2>Klimaendringer</h2>
+            <p>Klimaendringene er en stor global utfordring. Temperaturen på jorda stiger på grunn av utslipp av klimagasser, særlig CO2. Dette fører til smelting av is ved polene, stigende havnivå og mer ekstremvær.</p>
+
+            <p>Norge produserer olje og gass, noe som bidrar til klimagassutslipp. Samtidig satser Norge mye på fornybar energi. Nesten all elektrisitet i Norge kommer fra vannkraft.</p>
+
+            <h2>Kildesortering og gjenbruk</h2>
+            <p>I Norge sorterer folk søppelet sitt. Matavfall, plast, papir og restavfall sorteres i ulike beholdere. Mye av det som sorteres, kan brukes på nytt eller omdannes til energi.</p>
+
+            <p>Nordmenn er flinke til å gjenbruke ting. Det finnes mange bruktbutikker og bytteordninger. Å kjøpe brukt er bra for miljøet og lommebok.</p>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    id: 'velferd',
+    title: 'Velferd og helse',
+    titleRu: 'Благополучие и здоровье',
+    icon: '🏥',
+    sections: [
+      {
+        id: 'velferd-1',
+        title: 'Den norske velferdsstaten',
+        content: `
+          <h1>Den norske velferdsstaten</h1>
+          <div class="section-meta"><span class="meta-tag">Velferd</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>Norge er en velferdsstat. Det betyr at staten tar ansvar for å gi alle innbyggere et godt liv. Velferdsstaten finansieres av skatter og avgifter.</p>
+
+            <h2>Trygdeordninger</h2>
+            <p>Det finnes mange trygdeordninger i Norge. Hvis du mister jobben, kan du få dagpenger. Hvis du blir syk, kan du få sykepenger. Når du blir gammel, får du alderspensjon.</p>
+
+            <p>Nav er den viktigste velferdsetaten i Norge. Nav hjelper folk med å finne jobb, og de administrerer mange av trygdeordningene.</p>
+
+            <h2>Helsetjenester</h2>
+            <p>I Norge har alle rett til helsetjenester. Du kan gå til fastlegen din når du er syk. Fastlegen er din faste lege som kjenner din helsesituasjon. Hvis du trenger spesialisthjelp, må fastlegen sende en henvisning.</p>
+
+            <p>Sykehusene i Norge er i stor grad offentlig drevet. Behandling på sykehus er gratis, men du betaler en egenandel hos fastlegen og hos spesialister.</p>
+
+            <h2>Barnehage og familievelferd</h2>
+            <p>Staten støtter barnefamilier på mange måter. Du får barnetrygd for hvert barn under 18 år. Det finnes mange barnehageplasser, og det er billig å ha barn i barnehage. Foreldre har rett til foreldrepermisjon når de får barn.</p>
+          </div>
+        `
+      },
+      {
+        id: 'velferd-2',
+        title: 'Helse og livsstil',
+        content: `
+          <h1>Helse og livsstil</h1>
+          <div class="section-meta"><span class="meta-tag">Velferd</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>God helse handler om mer enn å ikke være syk. Det handler om å ha det bra fysisk, psykisk og sosialt. Livsstilen vår påvirker helsen vår mye.</p>
+
+            <h2>Fysisk aktivitet</h2>
+            <p>Nordmenn er generelt glade i friluftsliv og fysisk aktivitet. Å gå tur i skog og fjell er en populær aktivitet. Mange nordmenn går på ski om vinteren. Regelmessig fysisk aktivitet er bra for helsen.</p>
+
+            <h2>Kosthold</h2>
+            <p>Et sunt kosthold er viktig for helsen. Det norske kostholdet har forandret seg mye de siste tiårene. Tradisjonelt spiste nordmenn mye fisk, poteter og brød. I dag spiser nordmenn mat fra hele verden.</p>
+
+            <h2>Psykisk helse</h2>
+            <p>Psykisk helse er like viktig som fysisk helse. Mange nordmenn sliter med psykiske plager som angst og depresjon. Det er viktig å søke hjelp hvis du har det vanskelig. Du kan snakke med fastlegen din om psykiske problemer.</p>
+
+            <h2>Rus og avhengighet</h2>
+            <p>Alkohol er lovlig i Norge, men det er aldersgrenser. Du må være 18 år for å kjøpe øl og vin, og 20 år for å kjøpe brennevin. Narkotika er ulovlig. Helsevesenet hjelper folk med rusproblemer.</p>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    id: 'utdanning',
+    title: 'Utdanning og arbeid',
+    titleRu: 'Образование и работа',
+    icon: '🎓',
+    sections: [
+      {
+        id: 'utdanning-1',
+        title: 'Det norske skolesystemet',
+        content: `
+          <h1>Det norske skolesystemet</h1>
+          <div class="section-meta"><span class="meta-tag">Utdanning</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>I Norge er det ti år med obligatorisk grunnskole. Barn begynner på skolen det året de fyller seks år. Grunnskolen er delt inn i barneskole og ungdomsskole.</p>
+
+            <h2>Barneskole og ungdomsskole</h2>
+            <p>Barneskolen varer fra 1. til 7. trinn. Ungdomsskolen varer fra 8. til 10. trinn. Grunnskolen er gratis, og alle barn har plikt og rett til å gå på skole.</p>
+
+            <h2>Videregående opplæring</h2>
+            <p>Etter grunnskolen kan man gå på videregående skole. Videregående opplæring varer i tre år. Du kan velge mellom studieforberedende utdanningsprogram eller yrkesfaglig utdanningsprogram.</p>
+
+            <p>Studieforberedende gir generell studiekompetanse og lar deg søke på høyskoler og universiteter. Yrkesfag gir fagbrev og yrkeskompetanse innenfor ulike yrker.</p>
+
+            <h2>Høyere utdanning</h2>
+            <p>Norge har mange universiteter og høyskoler. Høyere utdanning er i stor grad gratis i Norge. Du betaler bare en liten semesteravgift. Du kan søke om støtte fra Lånekassen for å finansiere studiene dine.</p>
+          </div>
+        `
+      },
+      {
+        id: 'utdanning-2',
+        title: 'Arbeidsliv i Norge',
+        content: `
+          <h1>Arbeidsliv i Norge</h1>
+          <div class="section-meta"><span class="meta-tag">Utdanning</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>Det norske arbeidslivet er preget av høy organisasjonsgrad og samarbeid mellom arbeidstakere, arbeidsgivere og staten. Dette systemet kalles den norske modellen.</p>
+
+            <h2>Rettigheter i arbeidslivet</h2>
+            <p>Arbeidsmiljøloven sikrer arbeidstakernes rettigheter. Du har rett til en skriftlig arbeidskontrakt. Du har rett til ferie, normalt 25 virkedager i året. Arbeidstiden skal normalt ikke overstige 40 timer i uken.</p>
+
+            <p>Dersom du blir urettmessig oppsagt, kan du klage. Du har rett til å organisere deg i en fagforening. Fagforeningene forhandler om lønn og arbeidsvilkår på vegne av sine medlemmer.</p>
+
+            <h2>Likestilling i arbeidslivet</h2>
+            <p>Det er ulovlig å diskriminere i arbeidslivet på grunn av kjønn, etnisitet, religion, alder eller funksjonsnedsettelse. Kvinner og menn skal ha lik lønn for likt arbeid.</p>
+
+            <h2>Å finne jobb</h2>
+            <p>Nav hjelper arbeidsledige med å finne jobb. Du kan registrere deg som arbeidssøker hos Nav. Nav har oversikt over ledige stillinger og tilbyr kurs og veiledning. Det er også viktig å skrive et godt CV og søknadsbrev.</p>
+          </div>
+        `
+      },
+      {
+        id: 'utdanning-3',
+        title: 'Norsk språk og opplæring',
+        content: `
+          <h1>Norsk språk og opplæring</h1>
+          <div class="section-meta"><span class="meta-tag">Utdanning</span><span class="meta-tag">Kapittel 3</span></div>
+
+          <div class="text-block">
+            <p>Norsk er offisielt språk i Norge. Det er to skriftlige former av norsk: bokmål og nynorsk. Bokmål brukes av de fleste, men nynorsk brukes mye i Vest-Norge.</p>
+
+            <h2>Dialekter</h2>
+            <p>Det finnes mange dialekter i Norge. Folk i ulike deler av landet snakker litt ulikt. I motsetning til mange andre land er dialekter akseptert i alle sammenhenger i Norge, også på jobb og i media.</p>
+
+            <h2>Norskopplæring for innvandrere</h2>
+            <p>Innvandrere har rett og plikt til norskopplæring. Introduksjonsprogrammet gir nyankomne flyktninger norskopplæring og samfunnskunnskap. Programmet varer normalt to år.</p>
+
+            <p>Å lære norsk er viktig for å klare seg godt i Norge. Med gode norskferdigheter er det lettere å få jobb, å hjelpe barna med skolen og å delta i samfunnet.</p>
+
+            <h2>Prøver i norsk og samfunnskunnskap</h2>
+            <p>For å få norsk statsborgerskap må du bestå en prøve i norsk muntlig. Du må også ha gjennomført opplæring i samfunnskunnskap. Statsborgerprøven tester kunnskaper om det norske samfunnet.</p>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    id: 'religion',
+    title: 'Religion og livssyn',
+    titleRu: 'Религия и мировоззрение',
+    icon: '🕊️',
+    sections: [
+      {
+        id: 'religion-1',
+        title: 'Religioner i Norge',
+        content: `
+          <h1>Religioner i Norge</h1>
+          <div class="section-meta"><span class="meta-tag">Religion</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>Religionsfrihet er en grunnleggende rettighet i Norge. Alle har rett til å tro på det de vil, og til å utøve sin religion fritt. Det er også lov å ikke ha noen religion.</p>
+
+            <h2>Den norske kirke</h2>
+            <p>Kristendommen er den største religionen i Norge. Den norske kirke er en evangelisk-luthersk kirke og er den største trossamfunnet. Selv om de fleste nordmenn er medlemmer av Den norske kirke, er det mange som ikke er aktivt religiøse.</p>
+
+            <p>Siden 2017 er Den norske kirke skilt fra staten. Staten finansierer allikevel kirken og andre trossamfunn.</p>
+
+            <h2>Islam</h2>
+            <p>Islam er den nest største religionen i Norge. Det bor over 200 000 muslimer i Norge. De fleste kom som arbeidsinnvandrere eller flyktninger fra land som Pakistan, Somalia og Irak.</p>
+
+            <h2>Andre religioner</h2>
+            <p>Det finnes mange andre religiøse og livssynsmessige samfunn i Norge. Det er katolikker, buddhister, hinduer og jøder. Det er også mange som tilhører Human-Etisk Forbund, som er et livssynssamfunn for dem som ikke er religiøse.</p>
+          </div>
+        `
+      },
+      {
+        id: 'religion-2',
+        title: 'Høytider og tradisjoner',
+        content: `
+          <h1>Høytider og tradisjoner</h1>
+          <div class="section-meta"><span class="meta-tag">Religion</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>Norge har mange høytider og tradisjoner. Noen er kristne høytider, andre er nasjonale markeringer. Mange tradisjoner er knyttet til årstidene og naturen.</p>
+
+            <h2>Kristne høytider</h2>
+            <p>Jul feires den 24. desember i Norge. Juledag er 25. desember. Jul er den viktigste høytiden for de fleste nordmenn. Påske feires om våren, og mange nordmenn reiser på påskeferie til fjellet.</p>
+
+            <p>17. mai er Norges nasjonaldag. Da feires Grunnloven av 1814. Folk går i tog, barn bærer flagg, og mange kler seg i bunad, den norske nasjonaldrakten.</p>
+
+            <h2>Andre høytider</h2>
+            <p>Det er mange innvandrere i Norge som feirer sine egne høytider. Eid al-Fitr feires av muslimer etter fasten i ramadan. Diwali feires av hinduer. I et flerkulturelt samfunn er det viktig å respektere og lære om hverandres tradisjoner.</p>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    id: 'familie',
+    title: 'Familie og samliv',
+    titleRu: 'Семья и совместная жизнь',
+    icon: '👨‍👩‍👧',
+    sections: [
+      {
+        id: 'familie-1',
+        title: 'Familie i Norge',
+        content: `
+          <h1>Familie i Norge</h1>
+          <div class="section-meta"><span class="meta-tag">Familie</span><span class="meta-tag">Kapittel 1</span></div>
+
+          <div class="text-block">
+            <p>Familien er en viktig del av livet for de fleste nordmenn. Familieformene har endret seg mye de siste tiårene. I dag finnes det mange ulike typer familier i Norge.</p>
+
+            <h2>Ekteskapet</h2>
+            <p>Mange par velger å gifte seg. I Norge kan både heterofile og homofile par gifte seg. Vigsel kan gjøres borgerlig, på rådhuset, eller i en kirke eller annet trossamfunn.</p>
+
+            <p>Det er vanlig at par lever sammen uten å gifte seg. Slike samboerpar har mange av de samme rettighetene og pliktene som ektefeller.</p>
+
+            <h2>Barns rettigheter</h2>
+            <p>Barn har mange rettigheter i Norge. FNs barnekonvensjon er inkorporert i norsk lov. Barn har rett til å bli hørt i saker som angår dem. Det er forbudt å bruke fysisk straff mot barn.</p>
+
+            <p>Barnevernet passer på at barn har det bra. Hvis et barn lever i omsorgssvikt, kan barnevernet gripe inn. Hensikten er alltid å hjelpe barnet.</p>
+
+            <h2>Kjønnsroller</h2>
+            <p>Kjønnsrollene i Norge har forandret seg mye. Det er vanlig at begge foreldrene jobber. Fedre deltar mye i omsorgen for barna. Fedrekvoten er en del av foreldrepermisjonen som er forbeholdt far.</p>
+          </div>
+        `
+      },
+      {
+        id: 'familie-2',
+        title: 'Vold og overgrep',
+        content: `
+          <h1>Vold og overgrep</h1>
+          <div class="section-meta"><span class="meta-tag">Familie</span><span class="meta-tag">Kapittel 2</span></div>
+
+          <div class="text-block">
+            <p>Vold i nære relasjoner er et alvorlig samfunnsproblem. Det er ulovlig å utøve vold mot et familiemedlem. Alle har rett til å leve uten vold og frykt.</p>
+
+            <h2>Hva er vold?</h2>
+            <p>Vold er mer enn fysiske slag. Vold kan også være psykisk mishandling, trusler, isolering og kontroll av økonomi. Seksuelle overgrep er også en form for vold. Alle disse formene for vold er forbudt ved lov.</p>
+
+            <h2>Tvangsekteskap og æresvold</h2>
+            <p>Tvangsekteskap er forbudt i Norge. Et ekteskap skal bygge på begge parters fri vilje. Æresvold er vold som utøves for å gjenopprette familiens ære. Dette er ulovlig og straffbart.</p>
+
+            <h2>Å søke hjelp</h2>
+            <p>Det finnes hjelp for dem som opplever vold. Krisesentre er et tilbud til voldsutsatte kvinner, menn og barn. Du kan ringe politiet på 112 i nødstilfeller. Vold skal anmeldes til politiet. Du kan også kontakte Redd Barna eller andre organisasjoner for hjelp.</p>
+          </div>
+        `
+      }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let currentSection = null;
+let translateCache = {};
+let speakingUtterance = null;
+let longPressTimer = null;
+let activeWord = null;
+
+// ═══════════════════════════════════════════════════════
+// BUILD SIDEBAR
+// ═══════════════════════════════════════════════════════
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+
+  CHAPTERS.forEach((ch, ci) => {
+    const chDiv = document.createElement('div');
+    chDiv.className = 'nav-chapter';
+
+    const chBtn = document.createElement('button');
+    chBtn.className = 'chapter-btn';
+    chBtn.innerHTML = `
+      <span class="ch-icon">${ch.icon}</span>
+      <span style="flex:1;line-height:1.3">${ch.title}</span>
+      <span class="ch-arr">›</span>
+    `;
+    chBtn.onclick = () => {
+      chBtn.classList.toggle('expanded');
+      sectDiv.classList.toggle('show');
+    };
+
+    const sectDiv = document.createElement('div');
+    sectDiv.className = 'chapter-sections';
+
+    ch.sections.forEach((sec) => {
+      const btn = document.createElement('button');
+      btn.className = 'section-btn';
+      btn.textContent = sec.title;
+      btn.dataset.sectionId = sec.id;
+      btn.onclick = () => {
+        loadSection(ch, sec);
+        closeSidebar();
+      };
+      sectDiv.appendChild(btn);
+    });
+
+    chDiv.appendChild(chBtn);
+    chDiv.appendChild(sectDiv);
+    nav.appendChild(chDiv);
+
+    // Auto-expand first chapter
+    if (ci === 0) {
+      chBtn.classList.add('expanded');
+      sectDiv.classList.add('show');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD SECTION
+// ═══════════════════════════════════════════════════════
+function loadSection(chapter, section) {
+  currentSection = section;
+  stopSpeaking();
+  hidePopup();
+
+  // Update active state in sidebar
+  document.querySelectorAll('.section-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sectionId === section.id);
+  });
+
+  // Update topbar
+  document.getElementById('topbarTitle').textContent = section.title;
+
+  // Render content with clickable words
+  const area = document.getElementById('contentArea');
+  area.innerHTML = section.content;
+
+  // Wrap words and sentences
+  wrapTextNodes(area);
+
+  // Scroll to top
+  area.scrollTop = 0;
+
+  // Update progress
+  updateProgress();
+}
+
+// ═══════════════════════════════════════════════════════
+// WRAP TEXT — make words & sentences clickable
+// ═══════════════════════════════════════════════════════
+function wrapTextNodes(container) {
+  // Process paragraphs and li elements
+  const textEls = container.querySelectorAll('p, li');
+  textEls.forEach(el => {
+    const html = el.innerHTML;
+    el.innerHTML = wrapParagraph(html);
+  });
+
+  // Attach events
+  container.querySelectorAll('.w').forEach(w => {
+    // Tap → word translation
+    w.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sentence = w.closest('.s');
+      if (sentence && sentence._longPressed) {
+        sentence._longPressed = false;
+        return;
+      }
+      handleWordClick(w);
+    });
+
+    // Long press → sentence translation
+    w.addEventListener('pointerdown', (e) => {
+      longPressTimer = setTimeout(() => {
+        const sentence = w.closest('.s');
+        if (sentence) {
+          sentence._longPressed = true;
+          handleSentenceClick(sentence);
+        }
+      }, 500);
+    });
+
+    w.addEventListener('pointerup', () => clearTimeout(longPressTimer));
+    w.addEventListener('pointerleave', () => clearTimeout(longPressTimer));
+  });
+
+  // Desktop: double-click on sentence area
+  container.querySelectorAll('.s').forEach(s => {
+    s.addEventListener('dblclick', (e) => {
+      handleSentenceClick(s);
+    });
+  });
+}
+
+function wrapParagraph(html) {
+  // Split into sentences first (by . ! ?)
+  // Then wrap each word in a sentence
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+  const div = doc.body.firstChild;
+
+  let result = '';
+  div.childNodes.forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += wrapTextContent(node.textContent);
+    } else {
+      // keep html tags (like <strong>, <em>) intact
+      result += node.outerHTML || node.textContent;
+    }
+  });
+  return result;
+}
+
+function wrapTextContent(text) {
+  if (!text.trim()) return text;
+
+  // Split into sentences
+  const sentences = splitIntoSentences(text);
+  return sentences.map(sent => {
+    if (!sent.trim()) return sent;
+    // Wrap words
+    const words = sent.split(/(\s+)/);
+    const wrapped = words.map(part => {
+      if (/^\s+$/.test(part)) return part;
+      if (!part.trim()) return part;
+      // Extract trailing punctuation
+      const match = part.match(/^([\w\u00C0-\u024F\u00DF-\u00F6\u00F8-\u00FF'-]+)([.,!?;:»«"')]*)?$/i);
+      if (match) {
+        return `<span class="w">${match[1]}</span>${match[2] || ''}`;
+      }
+      return part;
+    }).join('');
+    return `<span class="s">${wrapped}</span>`;
+  }).join('');
+}
+
+function splitIntoSentences(text) {
+  // Simple split by sentence-ending punctuation
+  return text.split(/(?<=[.!?])\s+/);
+}
+
+// ═══════════════════════════════════════════════════════
+// WORD CLICK → translate + speak
+// ═══════════════════════════════════════════════════════
+function handleWordClick(wordEl) {
+  // Get clean word
+  const word = wordEl.textContent.replace(/[.,!?;:»«"')(\-]/g, '').trim();
+  if (!word) return;
+
+  // Highlight
+  document.querySelectorAll('.w.selected').forEach(w => w.classList.remove('selected'));
+  wordEl.classList.add('selected');
+  activeWord = word;
+
+  // Show popup
+  showPopup(word, 'слово', () => speak(word));
+  translateText(word);
+}
+
+// ═══════════════════════════════════════════════════════
+// SENTENCE CLICK → translate + speak
+// ═══════════════════════════════════════════════════════
+function handleSentenceClick(sentEl) {
+  const sentence = sentEl.textContent.trim();
+  if (!sentence) return;
+
+  document.querySelectorAll('.s.selected').forEach(s => s.classList.remove('selected'));
+  sentEl.classList.add('selected');
+
+  showPopup(sentence, 'предложение', () => speak(sentence));
+  translateText(sentence);
+}
+
+// ═══════════════════════════════════════════════════════
+// TRANSLATE via MyMemory API
+// ═══════════════════════════════════════════════════════
+async function translateText(text) {
+  const key = text.trim().toLowerCase();
+  if (translateCache[key]) {
+    setPopupTranslation(translateCache[key]);
+    return;
+  }
+
+  setPopupTranslation('<span class="popup-loading">Переводим…</span>');
+
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=no|ru`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    let translation = '';
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      translation = data.responseData.translatedText;
+      // Filter out error responses
+      if (translation.toLowerCase().includes('mymemory warning') || translation.toLowerCase().includes('you used')) {
+        translation = '⚠️ Лимит запросов. Попробуйте позже.';
+      }
+    } else {
+      translation = '— перевод недоступен —';
+    }
+
+    translateCache[key] = translation;
+    setPopupTranslation(translation);
+  } catch (e) {
+    setPopupTranslation('⚠️ Нет соединения');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// POPUP
+// ═══════════════════════════════════════════════════════
+function showPopup(original, type, speakFn) {
+  const popup = document.getElementById('popup');
+  document.getElementById('popupType').textContent = type;
+  document.getElementById('popupOriginal').textContent = original;
+  document.getElementById('popupTranslation').innerHTML = '<span class="popup-loading">Переводим…</span>';
+
+  // Speak button
+  const btnSpeak = document.getElementById('btnSpeakPopup');
+  btnSpeak.onclick = () => {
+    speakFn();
+    btnSpeak.classList.toggle('speaking', true);
+    setTimeout(() => btnSpeak.classList.remove('speaking'), 2500);
+  };
+
+  popup.classList.add('show');
+}
+
+function hidePopup() {
+  document.getElementById('popup').classList.remove('show');
+  document.querySelectorAll('.w.selected, .s.selected').forEach(el => el.classList.remove('selected'));
+}
+
+function setPopupTranslation(html) {
+  document.getElementById('popupTranslation').innerHTML = html;
+}
+
+document.getElementById('popupClose').onclick = hidePopup;
+
+// Close popup on tap outside
+document.getElementById('contentArea').addEventListener('click', (e) => {
+  if (!e.target.closest('.w') && !e.target.closest('.s')) {
+    hidePopup();
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// WEB SPEECH — Norwegian TTS
+// ═══════════════════════════════════════════════════════
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  stopSpeaking();
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'nb-NO';
+  utter.rate = 0.9;
+  utter.pitch = 1;
+
+  // Try to find a Norwegian voice
+  const voices = window.speechSynthesis.getVoices();
+  const norVoice = voices.find(v => v.lang.startsWith('nb') || v.lang.startsWith('no'));
+  if (norVoice) utter.voice = norVoice;
+
+  speakingUtterance = utter;
+  window.speechSynthesis.speak(utter);
+}
+
+function stopSpeaking() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  speakingUtterance = null;
+  document.getElementById('btnSpeakAll').classList.remove('speaking');
+}
+
+// Read all — speak the entire section text
+document.getElementById('btnSpeakAll').addEventListener('click', function() {
+  if (this.classList.contains('speaking')) {
+    stopSpeaking();
+    return;
+  }
+  if (!currentSection) return;
+
+  // Extract plain text from content
+  const area = document.getElementById('contentArea');
+  const text = area.innerText;
+  if (!text) return;
+
+  this.classList.add('speaking');
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'nb-NO';
+  utter.rate = 0.85;
+
+  const voices = window.speechSynthesis.getVoices();
+  const norVoice = voices.find(v => v.lang.startsWith('nb') || v.lang.startsWith('no'));
+  if (norVoice) utter.voice = norVoice;
+
+  utter.onend = () => this.classList.remove('speaking');
+  utter.onerror = () => this.classList.remove('speaking');
+
+  window.speechSynthesis.speak(utter);
+});
+
+// Voices load asynchronously on some browsers
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+// ═══════════════════════════════════════════════════════
+// SIDEBAR TOGGLE (mobile)
+// ═══════════════════════════════════════════════════════
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+document.getElementById('btnMenu').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+});
+
+document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+// ═══════════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════════
+function updateProgress() {
+  const all = [];
+  CHAPTERS.forEach(ch => ch.sections.forEach(s => all.push(s.id)));
+  const idx = all.indexOf(currentSection?.id);
+  const pct = idx >= 0 ? ((idx + 1) / all.length) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hidePopup();
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+buildSidebar();
+// Auto-load first section
+loadSection(CHAPTERS[0], CHAPTERS[0].sections[0]);
+</script>
+</body>
+</html>
