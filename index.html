@@ -844,6 +844,7 @@ function buildSidebar() {
 // ═══════════════════════════════════════════════════════════════
 function loadSection(ch, sec) {
   currentSection = sec;
+  localStorage.setItem('lastSection', sec.id);
   stopSpeaking(); hidePopup();
 
   document.querySelectorAll('.section-btn').forEach(b => b.classList.toggle('active', b.dataset.id === sec.id));
@@ -1038,10 +1039,33 @@ function updateProgress() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePopup(); });
 
 // ═══════════════════════════════════════════════════════════════
-// INIT
+// INIT — restore last position from localStorage
 // ═══════════════════════════════════════════════════════════════
 buildSidebar();
-loadSection(CHAPTERS[0], CHAPTERS[0].sections[0]);
+
+const lastId = localStorage.getItem('lastSection');
+let restored = false;
+
+if (lastId) {
+  for (const ch of CHAPTERS) {
+    const sec = ch.sections.find(s => s.id === lastId);
+    if (sec) {
+      // Expand the right chapter in sidebar
+      const btns = document.querySelectorAll('.chapter-btn');
+      const sectDivs = document.querySelectorAll('.chapter-sections');
+      const idx = CHAPTERS.indexOf(ch);
+      btns.forEach((b, i) => { b.classList.toggle('expanded', i === idx); });
+      sectDivs.forEach((d, i) => { d.classList.toggle('show', i === idx); });
+      loadSection(ch, sec);
+      restored = true;
+      break;
+    }
+  }
+}
+
+if (!restored) {
+  loadSection(CHAPTERS[0], CHAPTERS[0].sections[0]);
+}
 </script>
 </body>
 </html>
